@@ -16,6 +16,8 @@ you might still benifit from a renumberMesh.
 
 Support for internal patches (baffles) has been added.
 
+17/11/2015 Add salomeToOpenFOAM_GUI, a gui for salomeToOpenFOAM.
+
 License
 
     This script is free software: you can redistribute it and/or modify
