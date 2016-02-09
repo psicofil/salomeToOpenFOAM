@@ -16,8 +16,6 @@ you might still benifit from a renumberMesh.
 
 Support for internal patches (baffles) has been added.
 
-17/11/2015 Add salomeToOpenFOAM_GUI, a gui for salomeToOpenFOAM.
-
 License
 
     This script is free software: you can redistribute it and/or modify
@@ -34,4 +32,14 @@ License
     along with hexBlocker.  If not, see <http://www.gnu.org/licenses/>.
 
     The license is included in the file LICENSE.
+    
+# In this version:
+================
+
+17/11/2015 Add salomeToOpenFOAM_GUI, a gui for salomeToOpenFOAM.
+09/02/2016 Update Gui whit more options and beter syntaxis in the code.
+
+![ScreenShot](PreviewPictures/salomeOpenFOAM_GUI.png)
+
+Youtube Video: https://youtu.be/JQbkhz984lM
     
