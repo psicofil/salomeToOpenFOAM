@@ -37,6 +37,7 @@ License
 ================
 
 17/11/2015 Add salomeToOpenFOAM_GUI, a gui for salomeToOpenFOAM.
+
 09/02/2016 Update Gui whit more options and beter syntaxis in the code.
 
 ![ScreenShot](salomeOpenFOAM_GUI.png)
