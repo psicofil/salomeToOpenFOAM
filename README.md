@@ -1,4 +1,4 @@
-salomeToOpenFOAM
+# salomeToOpenFOAM
 ================
 
 A python script that outputs a Salome mesh to OpenFOAM
@@ -34,3 +34,4 @@ License
     along with hexBlocker.  If not, see <http://www.gnu.org/licenses/>.
 
     The license is included in the file LICENSE.
+    
