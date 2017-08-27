@@ -1,16 +1,16 @@
 u"""
 Export a Salome Mesh to OpenFOAM.
 
-It handles all types of cells. Use 
-salomeToOpenFOAM.exportToFoam(Mesh_1) 
+It handles all types of cells. Use
+salomeToOpenFOAM.exportToFoam(Mesh_1)
 to export. Optionally an output dir can be given as argument.
 
 It's also possible to select a mesh in the object browser and
 run the script via file->load script (ctrl-T).
 
-Groups of volumes will be treated as cellZones. If they are 
+Groups of volumes will be treated as cellZones. If they are
 present they will be put in the file cellZones. In order to convert
-to regions use the OpenFOAM tool 
+to regions use the OpenFOAM tool
 splitMeshRegions - cellZones
 
 No sorting of faces is done so you'll have to run
@@ -39,6 +39,7 @@ In order to use the mesh.
 #
 #    The license is included in the file LICENSE.
 #
+
 import sys
 import salome
 import SMESH
@@ -53,7 +54,7 @@ debug=1
 verify=False
 """verify face order, migt take longer time"""
 
-#Note: to skip renumberMesh just sort owner 
+#Note: to skip renumberMesh just sort owner
 #while moving positions also move neighbour,faces, and bcfaces
 #will probably have to first sort the internal faces then bc-faces within each bc
 
@@ -69,14 +70,14 @@ def exportToFoam(mesh,dirname='polyMesh'):
     in each group. Faces that don't have a group will be added
     to the group defaultPatches.
 
-    Next loop through all cells (volumes) and each face in the cell. 
+    Next loop through all cells (volumes) and each face in the cell.
     If the face has been visited before we add it to the neighbour list
-    If it hasn't been visited before then it might be a boundary face. 
+    If it hasn't been visited before then it might be a boundary face.
     If so then add the cell to the end of owner. If it's not a boundary face and
-    has not yet been visited then add it to the list of internal faces. 
+    has not yet been visited then add it to the list of internal faces.
 
-    In order to compare if faces has been visited a dictionary is used. 
-    The key is the sorted list of face nodes converted to a string. The value 
+    In order to compare if faces has been visited a dictionary is used.
+    The key is the sorted list of face nodes converted to a string. The value
     is the face id. I.e.
 
     facesSorted[key]=value
@@ -98,7 +99,7 @@ def exportToFoam(mesh,dirname='polyMesh'):
     #Get salome properties
     theStudy = salome.myStudy
     smesh = smeshBuilder.New(theStudy)
-    
+
 
     __debugPrint__('Number of nodes: %d\n' %(mesh.NbNodes()))
     volumes=mesh.GetElementsByType(SMESH.VOLUME)
@@ -129,8 +130,8 @@ def exportToFoam(mesh,dirname='polyMesh'):
     owner=[] #owner file, (of face id, volume id)
     neighbour=[] #neighbour file (of face id, volume id) only internal faces
 
-#Loop over all salome boundary elemets (faces) 
-# and store them inte the list bcFaces
+    #Loop over all salome boundary elemets (faces)
+    # and store them inte the list bcFaces
     grpStartFace=[] # list of face ids where the BCs starts
     grpNrFaces=[] # list of number faces in each BC
     grpNames=[] #list of the group name.
@@ -157,13 +158,12 @@ def exportToFoam(mesh,dirname='polyMesh'):
                     raise Exception(\
                         "Error the face, elemId %d, %s belongs to two " %(sfid,fnodes)  +\
                             "or more groups. One is : %s"  %(gr.GetName()))
-
             #if the group is a baffle then the faces should be added twice
             if __isGroupBaffle__(mesh,gr,extFaces):
                 nrBCfaces+=nr
                 nrFaces+=nr
                 nrIntFaces-=nr
-                #since nrIntFaces is reduced all previously grpStartFaces are 
+                #since nrIntFaces is reduced all previously grpStartFaces are
                 #out of sync
                 grpStartFace=[x-nr for x in grpStartFace]
                 grpNrFaces[-1]=nr*2
@@ -207,7 +207,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
             defGroup=mesh.CreateGroup(SMESH.FACE, 'defaultPatches' )
         except AttributeError:
             defGroup=mesh.CreateEmptyGroup(SMESH.FACE, 'defaultPatches' )
-
         defGroup.Add(salomeIDs)
         smesh.SetName(defGroup, 'defaultPatches')
         if salome.sg.hasDesktop():
@@ -239,8 +238,8 @@ def exportToFoam(mesh,dirname='polyMesh'):
             try:
                 key="%s" %sorted(fnodes)
                 fidinof=facesSorted[key]
-                #if faceSorted didn't throw an exception then the face is 
-                #already in the dict. Its an internal face and should be added 
+                #if faceSorted didn't throw an exception then the face is
+                #already in the dict. Its an internal face and should be added
                 # to the neighbour list
                 #print "fidinof %d" %fidinof
                 neighbour[fidinof]=ofvid
@@ -284,7 +283,7 @@ def exportToFoam(mesh,dirname='polyMesh'):
                             __debugPrint__('.',1)
 
         ofvid=ofvid+1;
-# end for v in volumes
+        # end for v in volumes
 
     nrCells=ofvid
     __debugPrint__("Finished processing volumes.\n")
@@ -296,11 +295,9 @@ def exportToFoam(mesh,dirname='polyMesh'):
     __debugPrint__(str(owner)+"\n",3)
     __debugPrint__('neighbour: %d\n' %(len(neighbour)),2)
     __debugPrint__(str(neighbour)+"\n",3)
-
-
     #Convert to "upper triangular order"
     #owner is sorted, for each cell sort faces it's neighbour faces
-    # i.e. change 
+    # i.e. change
     # owner   neighbour          owner   neighbour
     #     0          15                    0                3
     #     0            3          to       0              15
@@ -315,7 +312,7 @@ def exportToFoam(mesh,dirname='polyMesh'):
         if cellId == nextCellId:
             ownedfaces+=1
             continue
-        
+
         if ownedfaces >1:
             sId=faceId-ownedfaces+1 #start ID
             eId=faceId #end ID
@@ -323,7 +320,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
             inds.sort(key=neighbour.__getitem__)
             neighbour[sId:eId+1]=map(neighbour.__getitem__,inds)
             faces[sId:eId+1]=map(faces.__getitem__,inds)
-
         ownedfaces=1
     converttime=time.time()-starttime
 
@@ -396,7 +392,7 @@ def exportToFoam(mesh,dirname='polyMesh'):
     fileBoundary.close()
 
     #WRITE cellZones
-#Count number of cellZones
+    #Count number of cellZones
     nrCellZones=0;
     cellZonesName=list();
     for grp in mesh.GetGroups():
@@ -425,29 +421,25 @@ def exportToFoam(mesh,dirname='polyMesh'):
                 for csId in cellSalomeIDs:
                     ofID=scToOFc[csId]
                     fileCellZones.write("%d\n" %ofID)
-
                 fileCellZones.write(");\n}\n")
         fileCellZones.write(")\n")
         fileCellZones.flush()
         fileCellZones.close()
-
     totaltime=time.time()-starttime
     __debugPrint__("Finished writing to %s/%s \n" %(os.getcwd(),dirname))
     __debugPrint__("Converted mesh in %.0fs\n" %(converttime),1)
     __debugPrint__("Wrote mesh in %.0fs\n" %(totaltime-converttime),1)
     __debugPrint__("Total time: %0.fs\n" %totaltime,1)
-                   
+
 
 def __writeHeader__(file,fileType,nrPoints=0,nrCells=0,nrFaces=0,nrIntFaces=0):
     """Write a header for the files points, faces, owner, neighbour"""
-
     file.write("/*" + "-"*68 + "*\\\n" )
     file.write("|" + " "*70 + "|\n")
     file.write("|" + " "*4 + "File exported from Salome Platform" +\
                    " using SalomeToFoamExporter" +" "*5 +"|\n")
     file.write("|" + " "*70 + "|\n")
     file.write("\*" + "-"*68 + "*/\n")
-
     file.write("FoamFile\n{\n")
     file.write("\tversion\t\t2.0;\n")
     file.write("\tformat\t\tascii;\n")
@@ -469,7 +461,6 @@ def __writeHeader__(file,fileType,nrPoints=0,nrCells=0,nrFaces=0,nrIntFaces=0):
     file.write("}\n\n")
 
 
-    
 def __debugPrint__(msg,level=1):
     """Print only if level >= debug """
     if(debug >= level ):
@@ -480,19 +471,16 @@ def __debugPrint__(msg,level=1):
       #text = QtGui.QLabel(msg)
       #Box_L.addWidget(text)
       #message.show()
-        
 
 
 def __verifyFaceOrder__(mesh,vnodes,fnodes):
-    """ 
-    Verify if the face order is correct. I.e. pointing out of the cell 
-
+    """
+    Verify if the face order is correct. I.e. pointing out of the cell
     calc vol center
-    calc f center 
-    calc ftov=fcenter-vcenter 
+    calc f center
+    calc ftov=fcenter-vcenter
      calc fnormal=first to second cross first to last
     if ftov dot fnormal >0 reverse order
-
     """
     vc=__cog__(mesh,vnodes)
     fc=__cog__(mesh,fnodes)
@@ -502,10 +490,11 @@ def __verifyFaceOrder__(mesh,vnodes,fnodes):
         return False
     else:
         return True
-    
+
+
 def __cog__(mesh,nodes):
     """
-    calculate the center of gravity. 
+    calculate the center of gravity.
     """
     c=[0.0,0.0,0.0]
     for n in nodes:
@@ -518,9 +507,10 @@ def __cog__(mesh,nodes):
     c[2]/=len(nodes)
     return c
 
+
 def __calcNormal__(mesh,nodes):
-    """ 
-    Calculate and return face normal. 
+    """
+    Calculate and return face normal.
     """
     p0=mesh.GetNodeXYZ(nodes[0])
     p1=mesh.GetNodeXYZ(nodes[1])
@@ -528,28 +518,29 @@ def __calcNormal__(mesh,nodes):
     u=__diff__(p1,p0)
     v=__diff__(pn,p0)
     return __crossprod__(u,v)
-                       
-                 
-    
+
+
 def __diff__(u,v):
-    """ 
-    u - v, in 3D 
+    """
+    u - v, in 3D
     """
     res=[0.0]*3
     res[0]=u[0]-v[0]
     res[1]=u[1]-v[1]
     res[2]=u[2]-v[2]
     return res
-    
+
+
 def __dotprod__(u,v):
-    """ 
-    3D scalar dot product 
+    """
+    3D scalar dot product
     """
     return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
 
+
 def __crossprod__(u,v):
     """
-    3D cross product 
+    3D cross product
     """
     res=[0.0]*3
     res[0]=u[1]*v[2]-u[2]*v[1]
@@ -557,31 +548,31 @@ def __crossprod__(u,v):
     res[2]=u[0]*v[1]-u[1]*v[0]
     return res
 
+
 def findSelectedMeshes():
     meshes=list()
     smesh = smeshBuilder.New(salome.myStudy)
     nrSelected=salome.sg.SelectedCount() # total number of selected items
-    
     foundMesh=False
     for i in range(nrSelected):
         selected=salome.sg.getSelected(i)
         selobjID=salome.myStudy.FindObjectID(selected)
         selobj=selobjID.GetObject()
-        if selobj.__class__ ==SMESH._objref_SMESH_Mesh:
+        if selobj.__class__ == SMESH._objref_SMESH_Mesh or selobj.__class__ == salome.smesh.smeshBuilder.meshProxy:
             mName=selobjID.GetName().replace(" ","_")
             foundMesh=True
             mesh=smesh.Mesh(selobj)
             meshes.append(mesh)
-
     if not foundMesh:
         print "You have to select a mesh object and then run this script."
         QtGui.QMessageBox.critical(None,'Error',"You have to select a mesh object and then run this script.",QtGui.QMessageBox.Abort)
         print "or run the export function directly from TUI"
         print " import SalomeToOpenFOAM"
-        print " SalomeToOpenFOAM.exportToFoam(mesh,path)" 
+        print " SalomeToOpenFOAM.exportToFoam(mesh,path)"
         return None
     else:
         return meshes
+
 
 def __isGroupBaffle__(mesh,group,extFaces):
     for sid in group.GetIDs():
@@ -590,10 +581,10 @@ def __isGroupBaffle__(mesh,group,extFaces):
             return True
     return False
 
+
 def run():
-    """ 
+    """
     Main function. Export the selected mesh.
-    
     Will try to find the selected mesh.
     """
     dialog.setEnabled(False)
@@ -602,19 +593,22 @@ def run():
         if not mesh == None:
             mName=mesh.GetName()
             #outdir=os.getcwd()+"/"+mName+"/constant/polyMesh"
-            outdir=str(l_direcOutput.text())+"/constant/polyMesh"    
+            outdir=str(l_direcOutput.text())+"/constant/polyMesh"
             exportToFoam(mesh,outdir)
             __debugPrint__("finished exporting",1)
             QtGui.QMessageBox.information(None,'Information',"Finish: Mesh export in " + l_direcOutput.text())
             dialog.close()
             #QtGui.QMessageBox.information(None,'Information',)
-            
+
+
 def hide():
-    dialog.hide()              
-    
+    dialog.hide()
+
+
 def meshFile():
     PageName = QtGui.QFileDialog.getExistingDirectory(QtGui.qApp.activeWindow(),'Select output directory ')
     l_direcOutput.setText(str(PageName))
+
 
 # GUI APLIACTION
 dialog = QtGui.QDialog()
@@ -649,7 +643,7 @@ if not meshes == None:
                 cmb_bounds = QtGui.QComboBox()
                 cmb_bounds.addItems(["patch","wall","symmetry","empty","wedge","cyclic"])
                 bound.append(cmb_bounds)
-                layout.addWidget(cmb_bounds)    
+                layout.addWidget(cmb_bounds)
     okbox = QtGui.QDialogButtonBox(dialog)
     okbox.setOrientation(QtCore.Qt.Horizontal)
     okbox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
