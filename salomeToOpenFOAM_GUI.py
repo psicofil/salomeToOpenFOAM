@@ -95,12 +95,9 @@ def exportToFoam(mesh,dirname='polyMesh'):
     except Exception:
         QtGui.QMessageBox.critical(None,'Error',"could not open files aborting",QtGui.QMessageBox.Abort)
         return
-
     #Get salome properties
     theStudy = salome.myStudy
     smesh = smeshBuilder.New(theStudy)
-
-
     __debugPrint__('Number of nodes: %d\n' %(mesh.NbNodes()))
     volumes=mesh.GetElementsByType(SMESH.VOLUME)
     __debugPrint__("Number of cells: %d\n" %len(volumes))
@@ -111,7 +108,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     nrBCfaces=len(extFaces)
     nrExtFaces=len(extFaces)
     #nrBCfaces=mesh.NbFaces();#number of bcfaces in Salome
-
     nrFaces=0;
     for v in volumes:
         nrFaces+=mesh.ElemNbFaces(v)
@@ -121,7 +117,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     nrIntFaces=nrFaces-nrBCfaces #
     __debugPrint__('total number of faces: %d, internal: %d, external %d\n'  \
         %(nrFaces,nrIntFaces,nrExtFaces))
-
     __debugPrint__("Converting mesh to OpenFOAM\n")
     faces=[] #list of internal face nodes ((1 2 3 4 ... ))
     facesSorted=dict() #each list of nodes is sorted.
@@ -129,7 +124,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     bcFacesSorted=dict()
     owner=[] #owner file, (of face id, volume id)
     neighbour=[] #neighbour file (of face id, volume id) only internal faces
-
     #Loop over all salome boundary elemets (faces)
     # and store them inte the list bcFaces
     grpStartFace=[] # list of face ids where the BCs starts
@@ -175,7 +169,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
                     ofbcfid=ofbcfid+1
             else:
                 nrExtFacesInGroups+=nr
-
     __debugPrint__('total number of faces: %d, internal: %d, external %d\n'  \
         %(nrFaces,nrIntFaces,nrExtFaces),2)
     #Do the defined groups cover all BC-faces?
@@ -211,7 +204,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
         smesh.SetName(defGroup, 'defaultPatches')
         if salome.sg.hasDesktop():
             salome.sg.updateObjBrowser(1)
-
     #initialise the list faces vs owner/neighbour cells
     owner=[-1]*nrFaces
     neighbour=[-1]*nrIntFaces
@@ -224,8 +216,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     __debugPrint__(str(owner)+"\n",3)
     __debugPrint__('neighbour: %d\n' %(len(neighbour)),2)
     __debugPrint__(str(neighbour)+"\n",3)
-
-
     offid=0;
     ofvid=0; #volume id in openfoam
     for v in volumes:
@@ -281,10 +271,8 @@ def exportToFoam(mesh,dirname='polyMesh'):
                             __debugPrint__(':',1)
                         else:
                             __debugPrint__('.',1)
-
         ofvid=ofvid+1;
         # end for v in volumes
-
     nrCells=ofvid
     __debugPrint__("Finished processing volumes.\n")
     __debugPrint__('faces: %d\n' %(len(faces)),2)
@@ -312,7 +300,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
         if cellId == nextCellId:
             ownedfaces+=1
             continue
-
         if ownedfaces >1:
             sId=faceId-ownedfaces+1 #start ID
             eId=faceId #end ID
@@ -322,7 +309,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
             faces[sId:eId+1]=map(faces.__getitem__,inds)
         ownedfaces=1
     converttime=time.time()-starttime
-
     #WRITE points to file
     __debugPrint__("Writing the file points\n")
     __writeHeader__(filePoints,"points")
@@ -335,7 +321,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     filePoints.write(")\n")
     filePoints.flush()
     filePoints.close()
-
     #WRITE faces to file
     __debugPrint__("Writing the file faces\n")
     __writeHeader__(fileFaces,"faces")
@@ -356,7 +341,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     fileFaces.write(")\n")
     fileFaces.flush()
     fileFaces.close()
-
     #WRITE owner to file
     __debugPrint__("Writing the file owner\n")
     __writeHeader__(fileOwner,"owner",nrPoints,nrCells,nrFaces,nrIntFaces)
@@ -366,7 +350,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     fileOwner.write(")\n")
     fileOwner.flush()
     fileOwner.close()
-
     #WRITE neighbour
     __debugPrint__("Writing the file neighbour\n")
     __writeHeader__(fileNeighbour,"neighbour",nrPoints,nrCells,nrFaces,nrIntFaces)
@@ -376,7 +359,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     fileNeighbour.write(")\n")
     fileNeighbour.flush()
     fileNeighbour.close()
-
     #WRITE boundary file
     __debugPrint__("Writing the file boundary\n")
     __writeHeader__(fileBoundary,"boundary")
@@ -390,7 +372,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
         fileBoundary.write("\t}\n")
     fileBoundary.write(")\n")
     fileBoundary.close()
-
     #WRITE cellZones
     #Count number of cellZones
     nrCellZones=0;
@@ -431,7 +412,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     __debugPrint__("Wrote mesh in %.0fs\n" %(totaltime-converttime),1)
     __debugPrint__("Total time: %0.fs\n" %totaltime,1)
 
-
 def __writeHeader__(file,fileType,nrPoints=0,nrCells=0,nrFaces=0,nrIntFaces=0):
     """Write a header for the files points, faces, owner, neighbour"""
     file.write("/*" + "-"*68 + "*\\\n" )
@@ -460,7 +440,6 @@ def __writeHeader__(file,fileType,nrPoints=0,nrCells=0,nrFaces=0,nrIntFaces=0):
     file.write("\tobject\t\t" + fileType +";\n")
     file.write("}\n\n")
 
-
 def __debugPrint__(msg,level=1):
     """Print only if level >= debug """
     if(debug >= level ):
@@ -471,7 +450,6 @@ def __debugPrint__(msg,level=1):
       #text = QtGui.QLabel(msg)
       #Box_L.addWidget(text)
       #message.show()
-
 
 def __verifyFaceOrder__(mesh,vnodes,fnodes):
     """
@@ -491,7 +469,6 @@ def __verifyFaceOrder__(mesh,vnodes,fnodes):
     else:
         return True
 
-
 def __cog__(mesh,nodes):
     """
     calculate the center of gravity.
@@ -507,7 +484,6 @@ def __cog__(mesh,nodes):
     c[2]/=len(nodes)
     return c
 
-
 def __calcNormal__(mesh,nodes):
     """
     Calculate and return face normal.
@@ -519,7 +495,6 @@ def __calcNormal__(mesh,nodes):
     v=__diff__(pn,p0)
     return __crossprod__(u,v)
 
-
 def __diff__(u,v):
     """
     u - v, in 3D
@@ -530,13 +505,11 @@ def __diff__(u,v):
     res[2]=u[2]-v[2]
     return res
 
-
 def __dotprod__(u,v):
     """
     3D scalar dot product
     """
     return u[0]*v[0] + u[1]*v[1] + u[2]*v[2]
-
 
 def __crossprod__(u,v):
     """
@@ -548,7 +521,6 @@ def __crossprod__(u,v):
     res[2]=u[0]*v[1]-u[1]*v[0]
     return res
 
-
 def findSelectedMeshes():
     meshes=list()
     smesh = smeshBuilder.New(salome.myStudy)
@@ -558,7 +530,7 @@ def findSelectedMeshes():
         selected=salome.sg.getSelected(i)
         selobjID=salome.myStudy.FindObjectID(selected)
         selobj=selobjID.GetObject()
-        if selobj.__class__ == SMESH._objref_SMESH_Mesh or selobj.__class__ == salome.smesh.smeshBuilder.meshProxy:
+        if 1==1:#selobj.__class__ == SMESH._objref_SMESH_Mesh or selobj.__class__ == salome.smesh.smeshBuilder.meshProxy:
             mName=selobjID.GetName().replace(" ","_")
             foundMesh=True
             mesh=smesh.Mesh(selobj)
@@ -573,14 +545,12 @@ def findSelectedMeshes():
     else:
         return meshes
 
-
 def __isGroupBaffle__(mesh,group,extFaces):
     for sid in group.GetIDs():
         if not sid in extFaces:
             __debugPrint__("group %s is a baffle\n" %group.GetName(),1)
             return True
     return False
-
 
 def run():
     """
@@ -600,15 +570,12 @@ def run():
             dialog.close()
             #QtGui.QMessageBox.information(None,'Information',)
 
-
 def hide():
     dialog.hide()
-
 
 def meshFile():
     PageName = QtGui.QFileDialog.getExistingDirectory(QtGui.qApp.activeWindow(),'Select output directory ')
     l_direcOutput.setText(str(PageName))
-
 
 # GUI APLIACTION
 dialog = QtGui.QDialog()
