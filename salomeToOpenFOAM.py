@@ -95,12 +95,9 @@ def exportToFoam(mesh,dirname='polyMesh'):
     except Exception:
         print "could not open files aborting"
         return
-
     #Get salome properties
     theStudy = salome.myStudy
     smesh = smeshBuilder.New(theStudy)
-
-
     __debugPrint__('Number of nodes: %d\n' %(mesh.NbNodes()))
     volumes=mesh.GetElementsByType(SMESH.VOLUME)
     __debugPrint__("Number of cells: %d\n" %len(volumes))
@@ -111,7 +108,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     nrBCfaces=len(extFaces)
     nrExtFaces=len(extFaces)
     #nrBCfaces=mesh.NbFaces();#number of bcfaces in Salome
-
     nrFaces=0;
     for v in volumes:
         nrFaces+=mesh.ElemNbFaces(v)
@@ -121,7 +117,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     nrIntFaces=nrFaces-nrBCfaces #
     __debugPrint__('total number of faces: %d, internal: %d, external %d\n'  \
         %(nrFaces,nrIntFaces,nrExtFaces))
-
     __debugPrint__("Converting mesh to OpenFOAM\n")
     faces=[] #list of internal face nodes ((1 2 3 4 ... ))
     facesSorted=dict() #each list of nodes is sorted.
@@ -129,7 +124,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     bcFacesSorted=dict()
     owner=[] #owner file, (of face id, volume id)
     neighbour=[] #neighbour file (of face id, volume id) only internal faces
-
     #Loop over all salome boundary elemets (faces)
     # and store them inte the list bcFaces
     grpStartFace=[] # list of face ids where the BCs starts
@@ -158,7 +152,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
                     raise Exception(\
                         "Error the face, elemId %d, %s belongs to two " %(sfid,fnodes)  +\
                             "or more groups. One is : %s"  %(gr.GetName()))
-
             #if the group is a baffle then the faces should be added twice
             if __isGroupBaffle__(mesh,gr,extFaces):
                 nrBCfaces+=nr
@@ -176,7 +169,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
                     ofbcfid=ofbcfid+1
             else:
                 nrExtFacesInGroups+=nr
-
     __debugPrint__('total number of faces: %d, internal: %d, external %d\n'  \
         %(nrFaces,nrIntFaces,nrExtFaces),2)
     #Do the defined groups cover all BC-faces?
@@ -208,12 +200,10 @@ def exportToFoam(mesh,dirname='polyMesh'):
             defGroup=mesh.CreateGroup(SMESH.FACE, 'defaultPatches' )
         except AttributeError:
             defGroup=mesh.CreateEmptyGroup(SMESH.FACE, 'defaultPatches' )
-
         defGroup.Add(salomeIDs)
         smesh.SetName(defGroup, 'defaultPatches')
         if salome.sg.hasDesktop():
             salome.sg.updateObjBrowser(1)
-
     #initialise the list faces vs owner/neighbour cells
     owner=[-1]*nrFaces
     neighbour=[-1]*nrIntFaces
@@ -226,8 +216,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     __debugPrint__(str(owner)+"\n",3)
     __debugPrint__('neighbour: %d\n' %(len(neighbour)),2)
     __debugPrint__(str(neighbour)+"\n",3)
-
-
     offid=0;
     ofvid=0; #volume id in openfoam
     for v in volumes:
@@ -283,10 +271,8 @@ def exportToFoam(mesh,dirname='polyMesh'):
                             __debugPrint__(':',1)
                         else:
                             __debugPrint__('.',1)
-
         ofvid=ofvid+1;
         # end for v in volumes
-
     nrCells=ofvid
     __debugPrint__("Finished processing volumes.\n")
     __debugPrint__('faces: %d\n' %(len(faces)),2)
@@ -314,7 +300,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
         if cellId == nextCellId:
             ownedfaces+=1
             continue
-
         if ownedfaces >1:
             sId=faceId-ownedfaces+1 #start ID
             eId=faceId #end ID
@@ -324,7 +309,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
             faces[sId:eId+1]=map(faces.__getitem__,inds)
         ownedfaces=1
     converttime=time.time()-starttime
-
     #WRITE points to file
     __debugPrint__("Writing the file points\n")
     __writeHeader__(filePoints,"points")
@@ -337,7 +321,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     filePoints.write(")\n")
     filePoints.flush()
     filePoints.close()
-
     #WRITE faces to file
     __debugPrint__("Writing the file faces\n")
     __writeHeader__(fileFaces,"faces")
@@ -358,7 +341,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     fileFaces.write(")\n")
     fileFaces.flush()
     fileFaces.close()
-
     #WRITE owner to file
     __debugPrint__("Writing the file owner\n")
     __writeHeader__(fileOwner,"owner",nrPoints,nrCells,nrFaces,nrIntFaces)
@@ -368,7 +350,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     fileOwner.write(")\n")
     fileOwner.flush()
     fileOwner.close()
-
     #WRITE neighbour
     __debugPrint__("Writing the file neighbour\n")
     __writeHeader__(fileNeighbour,"neighbour",nrPoints,nrCells,nrFaces,nrIntFaces)
@@ -378,7 +359,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     fileNeighbour.write(")\n")
     fileNeighbour.flush()
     fileNeighbour.close()
-
     #WRITE boundary file
     __debugPrint__("Writing the file boundary\n")
     __writeHeader__(fileBoundary,"boundary")
@@ -395,7 +375,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
         fileBoundary.write("\t}\n")
     fileBoundary.write(")\n")
     fileBoundary.close()
-
     #WRITE cellZones
 #Count number of cellZones
     nrCellZones=0;
@@ -436,7 +415,6 @@ def exportToFoam(mesh,dirname='polyMesh'):
     __debugPrint__("Wrote mesh in %.0fs\n" %(totaltime-converttime),1)
     __debugPrint__("Total time: %0.fs\n" %totaltime,1)
 
-
 def __writeHeader__(file,fileType,nrPoints=0,nrCells=0,nrFaces=0,nrIntFaces=0):
     """Write a header for the files points, faces, owner, neighbour"""
     file.write("/*" + "-"*68 + "*\\\n" )
@@ -465,12 +443,10 @@ def __writeHeader__(file,fileType,nrPoints=0,nrCells=0,nrFaces=0,nrIntFaces=0):
     file.write("\tobject\t\t" + fileType +";\n")
     file.write("}\n\n")
 
-
 def __debugPrint__(msg,level=1):
     """Print only if level >= debug """
     if(debug >= level ):
         print msg,
-
 
 def __verifyFaceOrder__(mesh,vnodes,fnodes):
     """
@@ -517,8 +493,6 @@ def __calcNormal__(mesh,nodes):
     v=__diff__(pn,p0)
     return __crossprod__(u,v)
 
-
-
 def __diff__(u,v):
     """
     u - v, in 3D
@@ -528,7 +502,6 @@ def __diff__(u,v):
     res[1]=u[1]-v[1]
     res[2]=u[2]-v[2]
     return res
-
 
 def __dotprod__(u,v):
     """
@@ -550,7 +523,6 @@ def findSelectedMeshes():
     meshes=list()
     smesh = smeshBuilder.New(salome.myStudy)
     nrSelected=salome.sg.SelectedCount() # total number of selected items
-
     foundMesh=False
     for i in range(nrSelected):
         selected=salome.sg.getSelected(i)
@@ -577,11 +549,9 @@ def __isGroupBaffle__(mesh,group,extFaces):
             return True
     return False
 
-
 def main():
     """
     Main function. Export the selected mesh.
-
     Will try to find the selected mesh.
     """
     meshes=findSelectedMeshes()
@@ -592,7 +562,6 @@ def main():
             __debugPrint__("found selected mesh exporting to " + outdir + ".\n",1)
             exportToFoam(mesh,outdir)
             __debugPrint__("finished exporting",1)
-
 
 if __name__ == "__main__":
     main()
