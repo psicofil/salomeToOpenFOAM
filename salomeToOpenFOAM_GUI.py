@@ -64,7 +64,7 @@ except:
 debug=1
 
 
-verify=False
+verify=True
 """verify face order, migt take longer time"""
 
 #Note: to skip renumberMesh just sort owner
@@ -270,7 +270,7 @@ def exportToFoam(mesh,dirname='polyMesh'):
                 except KeyError:
                     #the face is not in bc list either so it's a new internal face
                     __debugPrint__('\t a new face was found, %d, %s, cell %d\n' %(fi,fnodes,ofvid),3)
-                    if verify:
+                    if cb_verify.isChecked():
                         if not __verifyFaceOrder__(mesh,nodes,fnodes):
                             __debugPrint__("\t face has bad order, reversing order\n",3)
                             fnodes.reverse()
@@ -615,8 +615,10 @@ if not meshes == None:
             l_boundary = QLabel("Boundary:")
             layout.addWidget(l_selectMesh,3,0)
             layout.addWidget(le_selectMesh,4,0)
-            layout.addWidget(l_groups,5,0)
-            layout.addWidget(l_boundary,5,1)
+            cb_verify  = QCheckBox("Verify face order")
+            layout.addWidget(cb_verify,5,0)
+            layout.addWidget(l_groups,6,0)
+            layout.addWidget(l_boundary,6,1)
             for gr in mesh.GetGroups():
                 l_groupMesh = QLabel(gr.GetName())
                 layout.addWidget(l_groupMesh)
