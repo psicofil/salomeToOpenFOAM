@@ -45,9 +45,22 @@ import salome
 import SMESH
 from salome.smesh import smeshBuilder
 import os,time
-from PyQt4 import QtGui,QtCore
+# import salome_pluginsmanager
+# from platform import system
+try:
+    from PyQt4 import QtGui,QtCore
+    from PyQt4.QtGui import *
+    from PyQt4.QtCore import *
+except:
+    from PyQt5.QtWidgets import QWidget, QMessageBox
+    from PyQt5 import QtCore, QtGui
+    import PyQt5.QtCore as QtCore
+    from PyQt5.QtWidgets import *
+    from PyQt5.QtCore import Qt
+
 #different levels of verbosities, 0 all quiet,
 #higher values means more information
+
 debug=1
 
 
@@ -93,7 +106,7 @@ def exportToFoam(mesh,dirname='polyMesh'):
         fileNeighbour=open(dirname + "/neighbour",'w')
         fileBoundary=open(dirname + "/boundary",'w')
     except Exception:
-        QtGui.QMessageBox.critical(None,'Error',"could not open files aborting",QtGui.QMessageBox.Abort)
+        QMessageBox.critical(None,'Error',"could not open files aborting",QMessageBox.Abort)
         return
     #Get salome properties
     theStudy = salome.myStudy
@@ -444,10 +457,10 @@ def __debugPrint__(msg,level=1):
     """Print only if level >= debug """
     if(debug >= level ):
       print msg
-      #message = QtGui.QDialog()
+      #message = QDialog()
       #message.setWindowTitle("DEBUG PRINT MESSAGES")
-      #Box_L = QtGui.QVBoxLayout(message)
-      #text = QtGui.QLabel(msg)
+      #Box_L = QVBoxLayout(message)
+      #text = QLabel(msg)
       #Box_L.addWidget(text)
       #message.show()
 
@@ -537,7 +550,7 @@ def findSelectedMeshes():
             meshes.append(mesh)
     if not foundMesh:
         print "You have to select a mesh object and then run this script."
-        QtGui.QMessageBox.critical(None,'Error',"You have to select a mesh object and then run this script.",QtGui.QMessageBox.Abort)
+        QMessageBox.critical(None,'Error',"You have to select a mesh object and then run this script.",QMessageBox.Abort)
         print "or run the export function directly from TUI"
         print " import SalomeToOpenFOAM"
         print " SalomeToOpenFOAM.exportToFoam(mesh,path)"
@@ -566,28 +579,28 @@ def run():
             outdir=str(l_direcOutput.text())+"/constant/polyMesh"
             exportToFoam(mesh,outdir)
             __debugPrint__("finished exporting",1)
-            QtGui.QMessageBox.information(None,'Information',"Finish: Mesh export in " + l_direcOutput.text())
+            QMessageBox.information(None,'Information',"Finish: Mesh export in " + l_direcOutput.text())
             dialog.close()
-            #QtGui.QMessageBox.information(None,'Information',)
+            #QMessageBox.information(None,'Information',)
 
 def hide():
     dialog.hide()
 
 def meshFile():
-    PageName = QtGui.QFileDialog.getExistingDirectory(QtGui.qApp.activeWindow(),'Select output directory ')
+    PageName = QFileDialog.getExistingDirectory(qApp.activeWindow(),'Select output directory ')
     l_direcOutput.setText(str(PageName))
 
 # GUI APLIACTION
-dialog = QtGui.QDialog()
+dialog = QDialog()
 dialog.resize(300,100)
 dialog.setWindowTitle("Salome to OpenFOAM")
-layout = QtGui.QGridLayout(dialog)
+layout = QGridLayout(dialog)
 meshes = findSelectedMeshes()
 bound  = [] #list of boundaries
-l_direcOutput   = QtGui.QLabel("Output Directory:")
+l_direcOutput   = QLabel("Output Directory:")
 layout.addWidget(l_direcOutput,1,0)
-l_direcOutput   = QtGui.QLineEdit()
-pb_direcOutput = QtGui.QPushButton()
+l_direcOutput   = QLineEdit()
+pb_direcOutput = QPushButton()
 pb_direcOutput.setText("...")
 layout.addWidget(l_direcOutput,2,0)
 layout.addWidget(pb_direcOutput,2,1)
@@ -595,28 +608,28 @@ if not meshes == None:
     for mesh in meshes:
         if not mesh == None:
             mName=mesh.GetName()
-            l_selectMesh = QtGui.QLabel("Selected Mesh")
-            le_selectMesh = QtGui.QLineEdit(mName)
+            l_selectMesh = QLabel("Selected Mesh")
+            le_selectMesh = QLineEdit(mName)
             le_selectMesh.setEnabled(False)
-            l_groups = QtGui.QLabel("Groups Mesh:")
-            l_boundary = QtGui.QLabel("Boundary:")
+            l_groups = QLabel("Groups Mesh:")
+            l_boundary = QLabel("Boundary:")
             layout.addWidget(l_selectMesh,3,0)
             layout.addWidget(le_selectMesh,4,0)
             layout.addWidget(l_groups,5,0)
             layout.addWidget(l_boundary,5,1)
             for gr in mesh.GetGroups():
-                l_groupMesh = QtGui.QLabel(gr.GetName())
+                l_groupMesh = QLabel(gr.GetName())
                 layout.addWidget(l_groupMesh)
-                cmb_bounds = QtGui.QComboBox()
+                cmb_bounds = QComboBox()
                 cmb_bounds.addItems(["patch","wall","symmetry","empty","wedge","cyclic"])
                 bound.append(cmb_bounds)
                 layout.addWidget(cmb_bounds)
-    okbox = QtGui.QDialogButtonBox(dialog)
+    okbox = QDialogButtonBox(dialog)
     okbox.setOrientation(QtCore.Qt.Horizontal)
-    okbox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+    okbox.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
     layout.addWidget(okbox)
-    QtCore.QObject.connect(okbox, QtCore.SIGNAL("accepted()"), run)
-    QtCore.QObject.connect(okbox, QtCore.SIGNAL("rejected()"), hide)
+    okbox.accepted.connect(run)
+    okbox.rejected.connect(hide)
     pb_direcOutput.clicked.connect(meshFile)
     QtCore.QMetaObject.connectSlotsByName(dialog)
     dialog.show()
